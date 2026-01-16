@@ -82,6 +82,20 @@ sudo venv/bin/python main.py --refresh 30
 
 Weather data from [Open-Meteo](https://open-meteo.com/) (free, no API key required).
 
+## Development
+
+This project was created using [Claude Code](https://claude.ai/code) with **Claude Opus 4.5**.
+
+Initial prompt:
+
+> I have this 64x64 pixel LED panel. https://seengreat.com/wiki/74/rgb-matrix-p3-0-64x64
+>
+> Show the current weather conditions including a large weather pictogram, together with a forecast for the rest of the day and the next couple of days.
+>
+> Use this API to fetch the weather data https://open-meteo.com/en/docs
+>
+> The location can be customized when starting, default to Uster, Switzerland.
+
 ## License
 
 MIT
