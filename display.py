@@ -60,9 +60,12 @@ class WeatherDisplay:
         options.brightness = self.brightness
         options.hardware_mapping = 'regular'
 
-        # Pi 1 specific options for stability
-        options.gpio_slowdown = 4  # Slow down GPIO for Pi 1
-        options.disable_hardware_pulsing = True  # Avoid PWM conflicts
+        # Pi 1 specific options for stability and reduced flickering
+        options.gpio_slowdown = 2  # GPIO slowdown for Pi 1
+        options.pwm_bits = 7  # Reduce PWM bits to lower CPU load
+        options.pwm_lsb_nanoseconds = 300  # Increase for stability
+        options.disable_hardware_pulsing = True  # Required for Pi 1
+        options.drop_privileges = False  # Keep running as root
 
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
@@ -114,39 +117,27 @@ class WeatherDisplay:
 
         # === Bottom half: 3-day forecast ===
         # Divider line
-        draw.line([(0, 32), (63, 32)], fill=GRAY)
+        draw.line([(0, 33), (63, 33)], fill=GRAY)
 
         # Three columns: ~21 pixels each
         col_width = 21
         for i, day in enumerate(daily[:3]):
             x_offset = i * col_width + 2
 
-            # Day label (Today, Tom, +2)
-            if i == 0:
-                label = "Now"
-            elif i == 1:
-                label = "Tom"
-            else:
-                label = "+2d"
-            draw.text((x_offset + 2, 34), label, fill=GRAY, font=self.font)
-
-            # Small weather icon (16x16)
+            # Small weather icon (16x16) - starts at y=35
             day_icon_type = wmo_code_to_icon(day.get("weather_code", 0))
             day_icon = get_icon_16(day_icon_type)
-            img.paste(day_icon, (x_offset + 2, 42))
+            img.paste(day_icon, (x_offset + 2, 35))
 
-            # High/low temps
+            # High/low temps below icon (y=52)
             hi = day.get("temp_max", 0)
             lo = day.get("temp_min", 0)
             hi_str = "{:.0f}".format(hi)
             lo_str = "{:.0f}".format(lo)
 
-            # High temp (warm color)
-            draw.text((x_offset, 58), hi_str, fill=self._temp_color(hi), font=self.font)
-            # Separator
-            draw.text((x_offset + 10, 58), "/", fill=GRAY, font=self.font)
-            # Low temp (cool color)
-            draw.text((x_offset + 14, 58), lo_str, fill=self._temp_color(lo), font=self.font)
+            # Compact format: "hi/lo"
+            temp_str = "{}/{}".format(int(hi), int(lo))
+            draw.text((x_offset, 53), temp_str, fill=self._temp_color((hi + lo) / 2), font=self.font)
 
         # Send to matrix
         if not self.simulate and self.matrix:
